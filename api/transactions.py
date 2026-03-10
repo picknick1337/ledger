@@ -1,42 +1,59 @@
 """
 GET /api/transactions?user_id=<uid>&limit=50&offset=0&category=Food&month=2025-01
-Returns paginated transactions from Supabase.
+Vercel Python runtime — BaseHTTPRequestHandler pattern.
 """
-from api._utils import get_supabase, json_response, error_response
+import os
+import sys
+import json
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
+
+sys.path.insert(0, os.path.dirname(__file__))
+from _utils import get_supabase
 
 
-def handler(request, response):
-    user_id  = request.args.get("user_id")
-    limit    = min(int(request.args.get("limit", 50)), 200)
-    offset   = int(request.args.get("offset", 0))
-    category = request.args.get("category")     # optional filter
-    month    = request.args.get("month")         # "YYYY-MM" optional filter
+class handler(BaseHTTPRequestHandler):
 
-    if not user_id:
-        return error_response("Missing user_id", 400)
+    def do_GET(self):
+        parsed   = urlparse(self.path)
+        params   = parse_qs(parsed.query)
+        user_id  = (params.get("user_id")  or [""])[0]
+        limit    = min(int((params.get("limit")    or ["50"])[0]), 200)
+        offset   = int((params.get("offset")   or ["0"])[0])
+        category = (params.get("category") or [""])[0]
+        month    = (params.get("month")    or [""])[0]
 
-    sb = get_supabase()
+        if not user_id:
+            self._json(400, {"error": "Missing user_id"})
+            return
 
-    query = (
-        sb.table("transactions")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("date", desc=True)
-        .range(offset, offset + limit - 1)
-    )
+        sb    = get_supabase()
+        query = (
+            sb.table("transactions").select("*")
+            .eq("user_id", user_id)
+            .order("date", desc=True)
+            .range(offset, offset + limit - 1)
+        )
+        if category:
+            query = query.eq("category", category)
+        if month:
+            query = query.gte("date", f"{month}-01").lte("date", f"{month}-31")
 
-    if category:
-        query = query.eq("category", category)
+        result = query.execute()
+        self._json(200, {
+            "transactions": result.data or [],
+            "count":  len(result.data or []),
+            "offset": offset,
+            "limit":  limit,
+        })
 
-    if month:
-        # month = "YYYY-MM"  →  filter date between YYYY-MM-01 and YYYY-MM-31
-        query = query.gte("date", f"{month}-01").lte("date", f"{month}-31")
+    def _json(self, status, data):
+        body = json.dumps(data).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
 
-    result = query.execute()
-
-    return json_response({
-        "transactions": result.data or [],
-        "count":        len(result.data or []),
-        "offset":       offset,
-        "limit":        limit,
-    })
+    def log_message(self, *args):
+        pass

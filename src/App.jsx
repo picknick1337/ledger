@@ -36,7 +36,7 @@ const Tooltip_ = ({ active, payload, label }) => {
       <p style={{ color:"#F59E0B", fontFamily:"DM Mono", fontSize:11, marginBottom:6 }}>{label}</p>
       {payload.map((p, i) => (
         <p key={i} style={{ color:p.color, fontFamily:"DM Mono", fontSize:12, margin:"2px 0" }}>
-          {p.name}: ${Number(p.value).toLocaleString()}
+          {p.name}: ₹{Number(p.value).toLocaleString("en-IN")}
         </p>
       ))}
     </div>
@@ -331,12 +331,12 @@ export default function App() {
               {tab === "overview" && (
                 <>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:24 }}>
-                    <KPI label="Total Spend" value={`$${totalSpend.toLocaleString()}`}
+                    <KPI label="Total Spend" value={`₹${totalSpend.toLocaleString("en-IN")}`}
                       sub="Last 6 months" accent="#F59E0B" delay={0.0} />
                     <KPI label="Avg Monthly"
-                      value={`$${Math.round(totalSpend/6).toLocaleString()}`}
+                      value={`₹${Math.round(totalSpend/6).toLocaleString("en-IN")}`}
                       sub={`${ins.transaction_count} transactions`} accent="#6366F1" delay={0.1} />
-                    <KPI label="Cashback Earned" value={`$${totalCashback.toFixed(2)}`}
+                    <KPI label="Cashback Earned" value={`₹${totalCashback.toFixed(2)}`}
                       sub="At current rates" accent="#10B981" delay={0.2} />
                     <KPI label="Last Sync"
                       value={ins.recent_sync ? new Date(ins.recent_sync.synced_at).toLocaleDateString() : "—"}
@@ -356,7 +356,7 @@ export default function App() {
                             </linearGradient>
                           </defs>
                           <XAxis dataKey="label" tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(1)}k`}/>
+                          <YAxis tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false} tickFormatter={v=>`₹${(v/1000).toFixed(1)}k`}/>
                           <Tooltip content={<Tooltip_ />} />
                           <Area type="monotone" dataKey="total" name="Total" stroke="#F59E0B" strokeWidth={2} fill="url(#ag)" dot={{ fill:"#F59E0B", r:3 }}/>
                         </AreaChart>
@@ -373,7 +373,7 @@ export default function App() {
                               <Cell key={i} fill={CAT_COLORS[c.category] || "#64748B"} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={v=>`$${v.toLocaleString()}`}
+                          <Tooltip formatter={v=>`₹${Number(v).toLocaleString('en-IN')}`}
                             contentStyle={{ background:"#0F1117", border:"1px solid #2A2D3A", borderRadius:8, fontFamily:"DM Mono", fontSize:11 }} />
                         </PieChart>
                       </ResponsiveContainer>
@@ -405,10 +405,10 @@ export default function App() {
                             </div>
                             <div style={{ display:"flex", alignItems:"center", gap:20 }}>
                               <span style={{ fontFamily:"DM Mono", fontSize:11, color:"#10B981" }}>
-                                +${(t.cashback_earned||0).toFixed(2)}
+                                +₹{(t.cashback_earned||0).toFixed(2)}
                               </span>
                               <span style={{ fontFamily:"DM Mono", fontSize:13, color:"#F8F9FA", fontWeight:500 }}>
-                                ${(t.amount||0).toFixed(2)}
+                                ₹{(t.amount||0).toLocaleString("en-IN")}
                               </span>
                             </div>
                           </div>
@@ -426,7 +426,7 @@ export default function App() {
                     <ResponsiveContainer width="100%" height={280}>
                       <BarChart data={byMonth} barSize={10}>
                         <XAxis dataKey="label" tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false}/>
-                        <YAxis tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false} tickFormatter={v=>`$${v}`}/>
+                        <YAxis tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false} tickFormatter={v=>`₹${v}`}/>
                         <Tooltip content={<Tooltip_ />} />
                         {Object.entries(CAT_COLORS).slice(0,6).map(([cat, color], i) => (
                           <Bar key={cat} dataKey={`breakdown.${cat}`} stackId="a" fill={color} name={cat}
@@ -442,7 +442,7 @@ export default function App() {
                       <ResponsiveContainer width="100%" height={180}>
                         <LineChart data={byMonth}>
                           <XAxis dataKey="label" tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false} tickFormatter={v=>`$${(v/1000).toFixed(1)}k`}/>
+                          <YAxis tick={{ fill:"#4B5563", fontSize:11, fontFamily:"DM Mono" }} axisLine={false} tickLine={false} tickFormatter={v=>`₹${(v/1000).toFixed(1)}k`}/>
                           <Tooltip content={<Tooltip_ />} />
                           <Line type="monotone" dataKey="total" name="Total" stroke="#F59E0B" strokeWidth={2} dot={{ fill:"#F59E0B", r:3 }}/>
                         </LineChart>
@@ -457,7 +457,7 @@ export default function App() {
                             <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
                               <span style={{ fontFamily:"Instrument Sans", fontSize:12, color:"#9CA3AF" }}>{c.category}</span>
                               <span style={{ fontFamily:"DM Mono", fontSize:11, color:CAT_COLORS[c.category]||"#64748B" }}>
-                                ${c.total.toLocaleString()}
+                                ₹{c.total.toLocaleString("en-IN")}
                               </span>
                             </div>
                             <div style={{ height:3, background:"#1A1D2A", borderRadius:4 }}>
@@ -496,10 +496,10 @@ export default function App() {
                         </span>
                       </div>
                       <span style={{ fontFamily:"DM Mono", fontSize:13, color:"#F8F9FA", alignSelf:"center" }}>
-                        ${m.total.toLocaleString()}
+                        ₹{m.total.toLocaleString("en-IN")}
                       </span>
                       <span style={{ fontFamily:"DM Mono", fontSize:12, color:"#6B7280", alignSelf:"center" }}>{m.count}</span>
-                      <span style={{ fontFamily:"DM Mono", fontSize:12, color:"#6B7280", alignSelf:"center" }}>${m.avg_txn}</span>
+                      <span style={{ fontFamily:"DM Mono", fontSize:12, color:"#6B7280", alignSelf:"center" }}>₹{m.avg_txn}</span>
                       <span style={{ fontFamily:"DM Mono", fontSize:11, color:CAT_COLORS[m.category]||"#64748B", alignSelf:"center",
                         background:`${CAT_COLORS[m.category]||"#64748B"}18`, padding:"2px 8px", borderRadius:4, width:"fit-content" }}>
                         {m.category}
@@ -513,13 +513,13 @@ export default function App() {
               {tab === "optimize" && (
                 <>
                   <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:16, marginBottom:24 }}>
-                    <KPI label="Current Cashback" value={`$${totalCashback.toFixed(0)}/yr`}
+                    <KPI label="Current Cashback" value={`₹${totalCashback.toFixed(0)}/yr`}
                       sub="Estimated annualized" accent="#6B7280" delay={0.0} />
                     <KPI label="Potential Cashback"
-                      value={`$${(totalCashback + opps.reduce((s,o)=>s+o.annual_gain,0)).toFixed(0)}/yr`}
+                      value={`₹${(totalCashback + opps.reduce((s,o)=>s+o.annual_gain,0)).toFixed(0)}/yr`}
                       sub="With optimal card use" accent="#F59E0B" delay={0.1} />
                     <KPI label="Leaving on Table"
-                      value={`$${opps.reduce((s,o)=>s+o.annual_gain,0).toFixed(0)}/yr`}
+                      value={`₹${opps.reduce((s,o)=>s+o.annual_gain,0).toFixed(0)}/yr`}
                       sub={`${opps.length} opportunities found`} accent="#EF4444" delay={0.2} />
                   </div>
 
@@ -543,7 +543,7 @@ export default function App() {
                                   </span>
                                   <span style={{ fontFamily:"DM Mono", fontSize:12, color:"#10B981",
                                     background:"rgba(16,185,129,0.1)", padding:"2px 8px", borderRadius:4, whiteSpace:"nowrap", marginLeft:8 }}>
-                                    +${o.annual_gain}/yr
+                                    +₹{o.annual_gain}/yr
                                   </span>
                                 </div>
                                 <p style={{ fontFamily:"Instrument Sans", fontSize:12, color:"#6B7280", lineHeight:1.5 }}>
@@ -566,7 +566,7 @@ export default function App() {
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={byCategory} layout="vertical" barSize={8}>
                           <XAxis type="number" tick={{ fill:"#4B5563", fontSize:10, fontFamily:"DM Mono" }}
-                            axisLine={false} tickLine={false} tickFormatter={v=>`$${v}`}/>
+                            axisLine={false} tickLine={false} tickFormatter={v=>`₹${v}`}/>
                           <YAxis type="category" dataKey="category" tick={{ fill:"#6B7280", fontSize:10, fontFamily:"DM Mono" }}
                             axisLine={false} tickLine={false} width={90}
                             tickFormatter={v=>v.split(" ")[0]}/>

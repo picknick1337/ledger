@@ -1,5 +1,6 @@
 .vercel
 .env*
+client_secret_*
 # Dependencies
 node_modules/
 /jspm_packages/
