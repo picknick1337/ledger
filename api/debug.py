@@ -143,7 +143,7 @@ class handler(BaseHTTPRequestHandler):
                     log(f"Email {mid}", {"subject": subject, "body_preview": body_text[:200]})
 
                     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    model = genai.GenerativeModel('models/gemini-2.5-flash')
                     
                     prompt = f"""Extract credit card transaction from email. Return JSON only:
 {{"is_transaction":bool,"merchant":str|null,"amount":number|null,"currency":"INR","date":"YYYY-MM-DD"|null,"category":str|null}}

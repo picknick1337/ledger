@@ -153,7 +153,7 @@ def fetch_all_message_ids(access_token: str) -> list[str]:
 
 def parse_with_gemini(subject: str, body: str) -> dict | None:
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('models/gemini-2.5-flash')
     
     prompt = f"{SYSTEM_PROMPT}\n\nSubject: {subject}\n\nBody:\n{body[:3000]}"
     
