@@ -168,6 +168,128 @@ function ConnectGmail({ userId }) {
   );
 }
 
+// ── Debug Panel ────────────────────────────────────────────────────────────
+
+function DebugPanel({ userId }) {
+  const [running, setRunning] = useState(false);
+  const [logs, setLogs]       = useState(null);
+  const [error, setError]     = useState(null);
+
+  const run = async (stage) => {
+    setRunning(true); setLogs(null); setError(null);
+    try {
+      const res = await fetch("/api/debug", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, stage }),
+      });
+      const data = await res.json();
+      setLogs(data);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const stages = [
+    { id:"tokens", label:"1. Check tokens",     desc:"Is Gmail connected & token stored?" },
+    { id:"gmail",  label:"2. Search Gmail",     desc:"Does the query find your emails?" },
+    { id:"parse",  label:"3. Parse with Gemini",desc:"Can Gemini extract transactions?" },
+    { id:"all",    label:"4. Full check",        desc:"Run all stages + check Supabase rows" },
+  ];
+
+  return (
+    <div style={{ maxWidth:860 }}>
+      <div style={{ marginBottom:20 }}>
+        <p style={{ fontFamily:"DM Serif Display", fontSize:22, color:"#F8F9FA", marginBottom:6 }}>Debug Panel</p>
+        <p style={{ fontFamily:"DM Mono", fontSize:11, color:"#4B5563" }}>
+          Run each stage independently to find exactly where data is getting lost.
+        </p>
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:24 }}>
+        {stages.map(s => (
+          <button key={s.id} onClick={() => run(s.id)} disabled={running}
+            style={{ background:"#0F1117", border:"1px solid #2A2D3A", borderRadius:10,
+              padding:"14px 12px", cursor:"pointer", textAlign:"left", transition:"border-color 0.2s" }}>
+            <p style={{ fontFamily:"Instrument Sans", fontSize:12, fontWeight:600, color:"#F8F9FA", marginBottom:4 }}>{s.label}</p>
+            <p style={{ fontFamily:"DM Mono", fontSize:10, color:"#4B5563" }}>{s.desc}</p>
+          </button>
+        ))}
+      </div>
+
+      {running && (
+        <div style={{ fontFamily:"DM Mono", fontSize:12, color:"#F59E0B", padding:"20px 0" }}>
+          Running… (this may take 10–20s for Gemini parsing)
+        </div>
+      )}
+
+      {error && (
+        <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid #EF4444", borderRadius:8, padding:16, marginBottom:16 }}>
+          <p style={{ fontFamily:"DM Mono", fontSize:12, color:"#EF4444" }}>Network error: {error}</p>
+        </div>
+      )}
+
+      {logs && (
+        <div>
+          {/* Status banner */}
+          <div style={{ background: logs.ok ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+            border: `1px solid ${logs.ok ? "#10B981" : "#EF4444"}`, borderRadius:8,
+            padding:"10px 16px", marginBottom:16, display:"flex", alignItems:"center", gap:10 }}>
+            <span style={{ fontSize:16 }}>{logs.ok ? "✅" : "❌"}</span>
+            <span style={{ fontFamily:"DM Mono", fontSize:12, color: logs.ok ? "#10B981" : "#EF4444" }}>
+              {logs.ok ? "All stages passed" : `Failed: ${logs.error}`}
+            </span>
+          </div>
+
+          {/* Log entries */}
+          <div style={{ background:"#0A0D15", border:"1px solid #1E2130", borderRadius:10, padding:20, marginBottom:16 }}>
+            <p style={{ fontFamily:"DM Mono", fontSize:10, color:"#4B5563", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12 }}>Step-by-step log</p>
+            {(logs.logs || []).map((l, i) => (
+              <div key={i} style={{ marginBottom:12, paddingBottom:12, borderBottom:"1px solid #13161F" }}>
+                <p style={{ fontFamily:"DM Mono", fontSize:12, color:"#E5E7EB", marginBottom: l.data ? 6 : 0 }}>
+                  <span style={{ color:"#F59E0B", marginRight:8 }}>[{i+1}]</span>{l.msg}
+                </p>
+                {l.data && (
+                  <pre style={{ fontFamily:"DM Mono", fontSize:10, color:"#6B7280",
+                    background:"#0F1117", borderRadius:6, padding:"8px 12px",
+                    overflow:"auto", margin:0, whiteSpace:"pre-wrap", wordBreak:"break-all" }}>
+                    {JSON.stringify(l.data, null, 2)}
+                  </pre>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Parse results */}
+          {logs.parse_results && (
+            <div style={{ background:"#0A0D15", border:"1px solid #1E2130", borderRadius:10, padding:20 }}>
+              <p style={{ fontFamily:"DM Mono", fontSize:10, color:"#4B5563", textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:12 }}>Gemini parse results (first 3 emails)</p>
+              {logs.parse_results.map((r, i) => (
+                <div key={i} style={{ marginBottom:12, paddingBottom:12, borderBottom:"1px solid #13161F" }}>
+                  <p style={{ fontFamily:"Instrument Sans", fontSize:12, color:"#9CA3AF", marginBottom:6 }}>
+                    Email {i+1}: <span style={{ color:"#E5E7EB" }}>{r.subject || r.id}</span>
+                  </p>
+                  {r.error
+                    ? <p style={{ fontFamily:"DM Mono", fontSize:11, color:"#EF4444" }}>Error: {r.error}</p>
+                    : <pre style={{ fontFamily:"DM Mono", fontSize:10,
+                        color: r.parsed?.is_transaction ? "#10B981" : "#6B7280",
+                        background:"#0F1117", borderRadius:6, padding:"8px 12px",
+                        overflow:"auto", margin:0 }}>
+                        {JSON.stringify(r.parsed, null, 2)}
+                      </pre>
+                  }
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────
 
 export default function App() {
@@ -291,8 +413,9 @@ export default function App() {
           </div>
 
           <div style={{ display:"flex", gap:4 }}>
-            {["overview","trends","merchants","optimize"].map(t => (
-              <button key={t} className={`tab ${tab===t?"on":"off"}`} onClick={() => setTab(t)}>
+            {["overview","trends","merchants","optimize","debug"].map(t => (
+              <button key={t} className={`tab ${tab===t?"on":"off"}`} onClick={() => setTab(t)}
+                style={t==="debug" ? {color:"#EF4444"} : {}}>
                 {t[0].toUpperCase()+t.slice(1)}
               </button>
             ))}
@@ -581,6 +704,11 @@ export default function App() {
                     </Card>
                   </div>
                 </>
+              )}
+
+              {/* ── DEBUG ── */}
+              {tab === "debug" && (
+                <DebugPanel userId={session.user.id} />
               )}
             </>
           )}

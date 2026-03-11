@@ -1,12 +1,12 @@
 # Ledger — Credit Card Expense Dashboard
 
-Full-stack app: Gmail → Claude parsing → Supabase → React dashboard, deployed on Vercel.
+Full-stack app: Gmail → Gemini parsing → Supabase → React dashboard, deployed on Vercel.
 
 ## Stack
 - **Frontend**: React + Recharts (Vercel static)
 - **Backend**: Python serverless functions (`/api/*.py`) on Vercel
 - **Database**: Supabase (Postgres + Auth + Realtime)
-- **Parsing**: Claude API (email → structured transaction)
+- **Parsing**: Google Gemini API (email → structured transaction)
 - **Gmail**: Google OAuth2 + Gmail API
 
 ---
@@ -17,7 +17,7 @@ Full-stack app: Gmail → Claude parsing → Supabase → React dashboard, deplo
 - Python 3.9+
 - A [Supabase](https://supabase.com) project
 - A [Google Cloud](https://console.cloud.google.com) project with Gmail API enabled
-- An [Anthropic](https://console.anthropic.com) API key
+- A [Google AI Studio](https://aistudio.google.com) API key for Gemini
 - A [Vercel](https://vercel.com) account
 
 ---
@@ -103,8 +103,8 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_REDIRECT_URI=https://your-app.vercel.app/api/auth/callback
 
-# Anthropic
-ANTHROPIC_API_KEY=your-anthropic-api-key
+# Google Gemini
+GEMINI_API_KEY=your-gemini-api-key
 
 # App
 NEXTAUTH_SECRET=random-secret-string-32chars
@@ -146,7 +146,7 @@ User Browser
   └─ API calls
        ├─ GET  /api/auth/login     → Google OAuth redirect
        ├─ GET  /api/auth/callback  → Exchange code, store tokens
-       ├─ POST /api/sync           → Fetch Gmail → Claude → Supabase
+       ├─ POST /api/sync           → Fetch Gmail → Gemini → Supabase
        ├─ GET  /api/transactions   → Query Supabase
        └─ GET  /api/insights       → Aggregate analytics
 ```

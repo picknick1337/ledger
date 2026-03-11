@@ -1,6 +1,6 @@
 """
 POST /api/sync
-Gmail fetch -> Claude parsing -> Supabase upsert.
+Gmail fetch -> Gemini parsing -> Supabase upsert.
 Tuned for ICICI Bank credit card email formats:
   1. "Rs.803.00 debited via Credit Card **2137"
   2. "Transaction alert for your ICICI Bank Credit Card"
@@ -11,7 +11,7 @@ import sys
 import json
 import base64
 import httpx
-import anthropic
+import google.generativeai as genai
 from http.server import BaseHTTPRequestHandler
 from datetime import datetime, timezone
 from html.parser import HTMLParser
@@ -151,18 +151,21 @@ def fetch_all_message_ids(access_token: str) -> list[str]:
     return ids
 
 
-def parse_with_claude(subject: str, body: str) -> dict | None:
-    client  = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=400,
-        system=SYSTEM_PROMPT,
-        messages=[{
-            "role": "user",
-            "content": f"Subject: {subject}\n\nBody:\n{body[:3000]}"
-        }],
+def parse_with_gemini(subject: str, body: str) -> dict | None:
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    prompt = f"{SYSTEM_PROMPT}\n\nSubject: {subject}\n\nBody:\n{body[:3000]}"
+    
+    response = model.generate_content(
+        prompt,
+        generation_config=genai.types.GenerationConfig(
+            temperature=0.1,
+            max_output_tokens=400,
+        )
     )
-    raw = message.content[0].text.strip()
+    
+    raw = response.text.strip()
     # Strip accidental markdown fences
     if raw.startswith("```"):
         raw = raw.split("```")[1]
@@ -227,14 +230,14 @@ class handler(BaseHTTPRequestHandler):
             new_ids  = [mid for mid in all_ids if mid not in seen]
             new_txns = []
 
-            # ── 4. Parse each new email via Claude ────────────────────────
+            # ── 4. Parse each new email via Gemini ────────────────────────
             for mid in new_ids:
                 try:
                     msg_data        = gmail_get(f"/users/me/messages/{mid}", access_token, {"format": "full"})
                     subject, body_t = get_email_body(msg_data)
                     processed      += 1
 
-                    parsed = parse_with_claude(subject, body_t)
+                    parsed = parse_with_gemini(subject, body_t)
                     if not parsed:
                         continue
 
